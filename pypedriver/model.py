@@ -132,7 +132,14 @@ class Model:
             setattr(self, key, value)
         return self
 
-    def fetch_raw(self, filter_id=None, start=0, limit=50, sort=None):
+    def fetch_raw(
+        self,
+        filter_id=None,
+        start=0,
+        limit=50,
+        sort=None,
+        params={}
+    ):
         """Fetch raw data
 
         Fetches raw object data in a dictionary format.
@@ -143,6 +150,7 @@ class Model:
             start {int} -- id to start at (default: {0})
             limit {int} -- max of items to fetch (default: {50})
             sort {str} -- extra sorting string (default: {None})
+            params {dict} -- extra request parameters
 
         Returns:
             dict -- raw data
@@ -150,7 +158,10 @@ class Model:
         Raises:
             ConnectionError -- When some error has occured while connecting
         """
-        params = {'start': start, 'limit': limit}
+
+        params.update({'start': params.get('start') or start})
+        params.update({'limit': params.get('limit') or limit})
+
         if filter_id:
             params.update({'filter_id': filter_id})
         if sort:
@@ -176,7 +187,7 @@ class Model:
         response['data'] = data
         return response
 
-    def fetch(self, filter_id=None, start=0, limit=50, sort=None):
+    def fetch(self, filter_id=None, start=0, limit=50, sort=None, params={}):
         """Fetch models
 
         Fetches models.
@@ -191,14 +202,14 @@ class Model:
         Yields:
             Model -- model that corresponds to filters and set attributes
         """
-        response = self.fetch_raw(filter_id, start, limit, sort)
+        response = self.fetch_raw(filter_id, start, limit, sort, params)
         objects = response['data']
         if not objects:
             return []
         for data in objects:
             yield getattr(self.__client, self.__name)(**data)
 
-    def fetch_all(self, filter_id=None, start=0, limit=None):
+    def fetch_all(self, filter_id=None, start=0, limit=None, params={}):
         """Fetch all models
 
         Fetches all models.
@@ -216,7 +227,7 @@ class Model:
         yielded = 0
         run = True
         while run:
-            response = self.fetch_raw(filter_id, current, 50)
+            response = self.fetch_raw(filter_id, current, 50, params=params)
             if response['success'] and 'additional_data' not in response:
                 break
             pagination = response['additional_data']['pagination']
