@@ -223,16 +223,19 @@ class Model:
         Yields:
             Model -- model that corresponds to filters and set attributes
         """
+        resoponse_limit = 500
         current = start
         yielded = 0
         run = True
         while run:
-            response = self.fetch_raw(filter_id, current, 50, params=params)
+            response = self.fetch_raw(
+                filter_id, current, resoponse_limit, params=params
+            )
             if response['success'] and 'additional_data' not in response:
                 break
             pagination = response['additional_data']['pagination']
             if pagination['more_items_in_collection']:
-                current += 50
+                current += resoponse_limit
             else:
                 run = False
             for data in response['data'] or []:
